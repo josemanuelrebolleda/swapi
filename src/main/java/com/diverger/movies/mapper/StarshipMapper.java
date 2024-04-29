@@ -11,6 +11,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.Objects;
 
 @Component
 public class StarshipMapper {
@@ -39,7 +40,7 @@ public class StarshipMapper {
         starship.setMaxAtmospheringSpeed(ParseUtils.parseToIntOrDefault(starshipDTO.getMaxAtmospheringSpeed()));
 
         //We split the min and max values of crew
-        String[] crewValues = starshipDTO.getCrew().split(env.getProperty("starship.getCrew.splitter"));
+        String[] crewValues = starshipDTO.getCrew().split(Objects.requireNonNull(env.getProperty("starship.getCrew.splitter")));
         starship.setCrewMin(ParseUtils.parseToIntOrDefault(crewValues[0]));
         starship.setCrewMax(ParseUtils.parseToIntOrDefault(crewValues[1]));
         starship.setConsumables(starshipDTO.getConsumables());

@@ -1,4 +1,4 @@
-package com.diverger.movies;
+package com.diverger.movies.integration;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

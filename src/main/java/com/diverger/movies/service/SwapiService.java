@@ -14,10 +14,6 @@ public abstract class SwapiService<T, D> {
     String COUNT = "count";
     protected RestTemplate restTemplate = new RestTemplate();
 
-//    public SwapiService(String SERVICE_URL) {
-//        this.SERVICE_URL = SERVICE_URL;
-//    }
-
     public abstract T fetchDataByIndex(Integer index);
     public D fetchDataByURL(String url, Class<D> classData) {
         try {

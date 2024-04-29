@@ -43,6 +43,4 @@ public class StarshipDTO {
     private String edited;
     @JsonProperty("url")
     private String url;
-
-    // getters and setters
 }

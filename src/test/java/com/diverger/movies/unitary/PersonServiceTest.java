@@ -18,9 +18,6 @@ public class PersonServiceTest {
     private PersonServiceImpl personService;
 
     @Autowired
-    private PersonServiceImpl personServiceMock;
-
-    @Autowired
     PersonOutputMapper personOutputMapper;
     @Value("${swapi.base_url}")
     String BASE_URL;
