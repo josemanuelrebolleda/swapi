@@ -1,40 +1,26 @@
 package com.diverger.movies.mapper;
 
 import com.diverger.movies.dto.VehicleDTO;
-import com.diverger.movies.exceptions.InvalidUrlException;
-import com.diverger.movies.exceptions.MalformedUrlException;
+import com.diverger.movies.mapper.utils.ParseUtils;
 import com.diverger.movies.model.Vehicle;
 import com.diverger.movies.service.FilmServiceImpl;
 import com.diverger.movies.service.PersonServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-
 import org.springframework.stereotype.Component;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.stream.Collectors;
+import java.util.HashSet;
 
 @Component
 public class VehicleMapper {
 
-    private FilmServiceImpl filmService;
-    private PersonServiceImpl personService;
+    FilmServiceImpl filmService;
+    PersonServiceImpl personService;
 
-    @Lazy   
-@Autowired
-
-    public void setFilmService(FilmServiceImpl filmService) {
+    @Lazy
+    @Autowired
+    public void setServices(FilmServiceImpl filmService, PersonServiceImpl personService) {
         this.filmService = filmService;
-    }
-
-    @Lazy   
-@Autowired
-
-    public void setPersonService(PersonServiceImpl personService) {
         this.personService = personService;
     }
 
@@ -43,52 +29,21 @@ public class VehicleMapper {
         vehicle.setName(vehicleDTO.getName());
         vehicle.setModel(vehicleDTO.getModel());
         vehicle.setManufacturer(vehicleDTO.getManufacturer());
-        vehicle.setCostInCredits(Integer.parseInt(vehicleDTO.getCostInCredits()));
-        vehicle.setLength(Double.parseDouble(vehicleDTO.getLength()));
-        vehicle.setMaxAtmospheringSpeed(Integer.parseInt(vehicleDTO.getMaxAtmospheringSpeed()));
-        vehicle.setCrew(Integer.parseInt(vehicleDTO.getCrew()));
-        vehicle.setPassengers(Integer.parseInt(vehicleDTO.getPassengers()));
-        vehicle.setCargoCapacity(Integer.parseInt(vehicleDTO.getCargoCapacity()));
+        vehicle.setCostInCredits(ParseUtils.parseToIntOrDefault(vehicleDTO.getCostInCredits()));
+        vehicle.setLength(ParseUtils.parseToDoubleOrDefault(vehicleDTO.getLength()));
+        vehicle.setMaxAtmospheringSpeed(ParseUtils.parseToIntOrDefault(vehicleDTO.getMaxAtmospheringSpeed()));
+        vehicle.setCrew(ParseUtils.parseToIntOrDefault(vehicleDTO.getCrew()));
+        vehicle.setPassengers(ParseUtils.parseToIntOrDefault(vehicleDTO.getPassengers()));
+        vehicle.setCargoCapacity(ParseUtils.parseToIntOrDefault(vehicleDTO.getCargoCapacity()));
         vehicle.setConsumables(vehicleDTO.getConsumables());
         vehicle.setVehicleClass(vehicleDTO.getVehicleClass());
-        vehicle.setCreated(LocalDateTime.ofInstant(Instant.parse(vehicleDTO.getCreated()), ZoneId.systemDefault()));
-        vehicle.setEdited(LocalDateTime.ofInstant(Instant.parse(vehicleDTO.getEdited()), ZoneId.systemDefault()));
+        vehicle.setCreated(ParseUtils.parseToDateTime(vehicleDTO.getCreated()));
+        vehicle.setEdited(ParseUtils.parseToDateTime(vehicleDTO.getEdited()));
 
-        try {
-            vehicle.setUrl(new URL(vehicleDTO.getUrl()));
-        } catch (MalformedURLException e) {
-            throw new MalformedUrlException("Malformed URL in getUrl: " + vehicleDTO.getUrl(), e);
-        }
+        vehicle.setUrl(vehicleDTO.getUrl());
 
-        try {
-            vehicle.setPilots(vehicleDTO.getPilots().stream()
-                    .map(s -> {
-                        try {
-                            return new URL(s);
-                        } catch (MalformedURLException e) {
-                            throw new MalformedUrlException("Malformed URL in getPilots: " + s, e);
-                        }
-                    })
-                    .map(personService::fetchDataByURL)
-                    .collect(Collectors.toSet()));
-        } catch (InvalidUrlException e) {
-            throw new InvalidUrlException("Invalid URL in getPilots: ", e);
-        }
-
-        try {
-            vehicle.setFilms(vehicleDTO.getFilms().stream()
-                    .map(s -> {
-                        try {
-                            return new URL(s);
-                        } catch (MalformedURLException e) {
-                            throw new MalformedUrlException("Malformed URL in getFilms: " + s, e);
-                        }
-                    })
-                    .map(filmService::fetchDataByURL)
-                    .collect(Collectors.toSet()));
-        } catch (InvalidUrlException e) {
-            throw new InvalidUrlException("Invalid URL in getFilms: ", e);
-        }
+        vehicle.setPilots(new HashSet<>(vehicleDTO.getPilots()));
+        vehicle.setFilms(new HashSet<>(vehicleDTO.getFilms()));
 
         return vehicle;
     }

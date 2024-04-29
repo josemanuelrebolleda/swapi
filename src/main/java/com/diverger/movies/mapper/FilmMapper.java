@@ -1,20 +1,14 @@
 package com.diverger.movies.mapper;
 
 import com.diverger.movies.dto.FilmDTO;
-import com.diverger.movies.exceptions.InvalidUrlException;
+import com.diverger.movies.mapper.utils.ParseUtils;
 import com.diverger.movies.model.Film;
 import com.diverger.movies.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-
 import org.springframework.stereotype.Component;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.stream.Collectors;
+import java.util.HashSet;
 
 @Component
 public class FilmMapper {
@@ -63,69 +57,22 @@ public class FilmMapper {
     public Film dtoToFilm(FilmDTO filmDTO) {
         Film film = new Film();
         film.setTitle(filmDTO.getTitle());
-        film.setEpisode_id(filmDTO.getEpisodeId());
-        film.setOpening_crawl(filmDTO.getOpeningCrawl());
+        film.setEpisodeId(filmDTO.getEpisodeId());
+        film.setOpeningCrawl(filmDTO.getOpeningCrawl());
         film.setDirector(filmDTO.getDirector());
         film.setProducer(filmDTO.getProducer());
-        film.setRelease_date(filmDTO.getReleaseDate());
-        film.setCreated(LocalDateTime.ofInstant(Instant.parse(filmDTO.getCreated()), ZoneId.systemDefault()));
-        film.setEdited(LocalDateTime.ofInstant(Instant.parse(filmDTO.getEdited()), ZoneId.systemDefault()));
+        film.setReleaseDate(filmDTO.getReleaseDate());
+        film.setCreated(ParseUtils.parseToDateTime(filmDTO.getCreated()));
+        film.setEdited(ParseUtils.parseToDateTime(filmDTO.getEdited()));
 
-        film.setCharacters(filmDTO.getCharacters().stream()
-                .map(url -> {
-                    try {
-                        return personService.fetchDataByURL(new URL(url));
-                    } catch (MalformedURLException e) {
-                        throw new InvalidUrlException("Invalid URL for characters: " + url, e);
-                    }
-                })
-                .collect(Collectors.toList()));
+        film.setCharacters(new HashSet<>(filmDTO.getCharacters()));
+        film.setPlanets(new HashSet<>(filmDTO.getPlanets()));
+        film.setStarships(new HashSet<>(filmDTO.getStarships()));
+        film.setVehicles(new HashSet<>(filmDTO.getVehicles()));
+        film.setSpecies(new HashSet<>(filmDTO.getSpecies()));
 
-        film.setPlanets(filmDTO.getPlanets().stream()
-                .map(url -> {
-                    try {
-                        return planetService.fetchDataByURL(new URL(url));
-                    } catch (MalformedURLException e) {
-                        throw new InvalidUrlException("Invalid URL for planets: " + url, e);
-                    }
-                })
-                .collect(Collectors.toList()));
+        film.setUrl(filmDTO.getUrl());
 
-        film.setStarships(filmDTO.getStarships().stream()
-                .map(url -> {
-                    try {
-                        return starshipService.fetchDataByURL(new URL(url));
-                    } catch (MalformedURLException e) {
-                        throw new InvalidUrlException("Invalid URL for starships: " + url, e);
-                    }
-                })
-                .collect(Collectors.toList()));
-
-        film.setVehicles(filmDTO.getVehicles().stream()
-                .map(url -> {
-                    try {
-                        return vehicleService.fetchDataByURL(new URL(url));
-                    } catch (MalformedURLException e) {
-                        throw new InvalidUrlException("Invalid URL for vehicles: " + url, e);
-                    }
-                })
-                .collect(Collectors.toList()));
-
-        film.setSpecies(filmDTO.getSpecies().stream()
-                .map(url -> {
-                    try {
-                        return specieService.fetchDataByURL(new URL(url));
-                    } catch (MalformedURLException e) {
-                        throw new InvalidUrlException("Invalid URL for species: " + url, e);
-                    }
-                })
-                .collect(Collectors.toList()));
-
-        try {
-            film.setUrl(new URL(filmDTO.getUrl()));
-        } catch (MalformedURLException e) {
-            throw new InvalidUrlException("Invalid URL: " + filmDTO.getUrl(), e);
-        }
         return film;
     }
 }

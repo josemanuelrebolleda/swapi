@@ -1,46 +1,46 @@
 package com.diverger.movies.service;
 
-import com.diverger.movies.dto.FilmDTO;
 import com.diverger.movies.dto.PersonDTO;
-import com.diverger.movies.exceptions.InvalidUrlException;
+import com.diverger.movies.exceptions.ElementNotFoundException;
 import com.diverger.movies.exceptions.JsonParsingException;
-import com.diverger.movies.exceptions.PersonNotFoundException;
 import com.diverger.movies.mapper.PersonMapper;
 import com.diverger.movies.mapper.PersonOutputMapper;
 import com.diverger.movies.model.Person;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClientException;
 
-import java.net.URL;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Map;
 
 @Service
-public class PersonServiceImpl extends SwapiService<Person> {
+public class PersonServiceImpl extends SwapiService<Person, PersonDTO> {
 
     @Value("${json.name.field}")
-    private String jsonNameField;
+    private String JSON_NAME_FIELD;
+    @Value("${slash}")
+    private String SLASH;
 
-    private PersonMapper personMapper;
-    private PersonOutputMapper personOutputMapper;
+    PersonMapper personMapper;
+    PersonOutputMapper personOutputMapper;
 
+    Environment env;
     @Lazy
     @Autowired
-    public void setPersonMapper(PersonMapper personMapper) {
+    public void setMappers(PersonMapper personMapper, PersonOutputMapper personOutputMapper, Environment env) {
         this.personMapper = personMapper;
-    }
-
-    @Lazy
-    @Autowired
-    public void setPersonOutputMapper(PersonOutputMapper personOutputMapper) {
         this.personOutputMapper = personOutputMapper;
+        this.env = env;
     }
 
     @Value("${people.service_url}")
@@ -51,57 +51,83 @@ public class PersonServiceImpl extends SwapiService<Person> {
         setSERVICE_URL(serviceUrl);
     }
 
-    @Override
+
+    public ResponseEntity<String> getPersonInfoByName(String name) {
+        Person person = fetchDataByName(name);
+        if (person != null) {
+            return formatDataForOutput(person);
+        } else {
+            throw new ElementNotFoundException ("Person not found: " + name);
+        }
+    }
+
+
     @Cacheable("personByName")
     public Person fetchDataByName(String name) {
-        int index = 1;
+        Person person = null;
+        String url = BASE_URL + SERVICE_URL;
+        Map response = restTemplate.getForObject(url, Map.class);
         boolean found = false;
-        PersonDTO personDTO = null;
-        while (!found) {
-            String url = BASE_URL + SERVICE_URL + index + "/";
-            personDTO = restTemplate.getForObject(url, PersonDTO.class);
-            if (personDTO == null) {
-                throw new PersonNotFoundException("Person " + name + " not found");
+        if (response != null && response.containsKey(COUNT)) {
+            int count = (Integer) response.get(COUNT);
+            int index = 1;
+            int indexUrl = 1;
+
+            while (!found && index <= count) {
+                person = fetchDataByIndex(indexUrl);
+                if (person == null) {
+                    while (person == null) {
+                        indexUrl++;
+                        person = fetchDataByIndex(indexUrl);
+                    }
+                }
+                if (person.getName().equalsIgnoreCase(name)) {
+                    found = true;
+                } else {
+                    index++;
+                    indexUrl++;
+               }
             }
-            if (personDTO.getName().equalsIgnoreCase(name)) {
-                found = true;
-            } else {
-                index++;
+
+            if (!found) {
+                throw new ElementNotFoundException("Person with name " + name + " not found");
             }
         }
-        return personMapper.dtoToPerson(personDTO);
+
+        return person;
     }
 
     @Override
     @Cacheable("personByIndex")
-    public Person fetchDataByIndex(int index) {
-        String url = BASE_URL + SERVICE_URL + index + "/";
-        PersonDTO response = restTemplate.getForObject(url, PersonDTO.class);
+    public Person fetchDataByIndex(Integer index) {
+        String url = BASE_URL + SERVICE_URL + index + SLASH;
+        PersonDTO response = null;
+        try {
+            response = restTemplate.getForObject(url, PersonDTO.class);
+        } catch (RestClientException e) {
+            return null;
+        }
         if (response == null) {
-            throw new PersonNotFoundException("Person with index " + index + " not found");
+            return null;
         }
         return personMapper.dtoToPerson(response);
     }
 
+
     @Cacheable("personByURL")
-    public Person fetchDataByURL(URL url) {
-        try {
-            RestTemplate restTemplate = new RestTemplate();
-            PersonDTO response = restTemplate.getForObject(url.toString(), PersonDTO.class);
-            if (response == null) {
-                throw new InvalidUrlException("Person: Response is null for URL: " + url);
-            }
-            return personMapper.dtoToPerson(response);
-        } catch (Exception e) {
-            throw new InvalidUrlException("Person: Failed to fetch data from URL: " + url, e);
-        }
+    public Person fetchDataByURL(String url) {
+        PersonDTO response = super.fetchDataByURL(url, PersonDTO.class);
+        return personMapper.dtoToPerson(response);
     }
 
     public ResponseEntity<String> formatDataForOutput(Person data) {
         try {
             ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
             String personJson = mapper.writeValueAsString(personOutputMapper.mapToPersonOutput(data));
-            return ResponseEntity.ok(personJson);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            return new ResponseEntity<>(personJson, headers, HttpStatus.OK);
         } catch (Exception e) {
             throw new JsonParsingException("Error converting Person to PersonOutput", e);
         }

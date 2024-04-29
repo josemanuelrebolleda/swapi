@@ -4,7 +4,6 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.Set;
-import java.net.URL;
 
 
 @Data
@@ -12,17 +11,17 @@ public class Vehicle {
     private String name;
     private String model;
     private String manufacturer;
-    private int costInCredits;
+    private Integer costInCredits;
     private Double length;
-    private int maxAtmospheringSpeed;
-    private int crew;
-    private int passengers;
-    private int cargoCapacity;
+    private Integer maxAtmospheringSpeed;
+    private Integer crew;
+    private Integer passengers;
+    private Integer cargoCapacity;
     private String consumables;
     private String vehicleClass;
-    private Set<Person> pilots;
-    private Set<Film> films;
+    private Set<String> pilots;
+    private Set<String> films;
     private LocalDateTime created;
     private LocalDateTime edited;
-    private URL url;
+    private String url;
 }

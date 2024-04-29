@@ -11,11 +11,11 @@ import java.util.stream.Collectors;
 
 public class MapperUtils {
 
-    public static int stringToInt(String s) {
+    public static Integer stringToInt(String s) {
         return s != null ? Integer.parseInt(s) : 0;
     }
 
-    public static String intToString(int i) {
+    public static String intToString(Integer i) {
         return Integer.toString(i);
     }
 

@@ -9,9 +9,9 @@ import java.util.List;
 public class PlanetDTO {
     @JsonProperty("name")
     private String name;
-    @JsonProperty("Rotation_period")
+    @JsonProperty("rotation_period")
     private String rotationPeriod;
-    @JsonProperty("Orbital_period")
+    @JsonProperty("orbital_period")
     private String orbitalPeriod;
     @JsonProperty("diameter")
     private String diameter;
@@ -21,7 +21,7 @@ public class PlanetDTO {
     private String gravity;
     @JsonProperty("terrain")
     private String terrain;
-    @JsonProperty("Surface_water")
+    @JsonProperty("surface_water")
     private String surfaceWater;
     @JsonProperty("population")
     private String population;
