@@ -1,18 +1,17 @@
-package com.diverger.movies.unitary;
+package com.diverger.movies.completeSearch;
 
 import com.diverger.movies.mapper.PersonOutputMapper;
 import com.diverger.movies.model.Person;
 import com.diverger.movies.service.PersonServiceImpl;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 
-@SpringBootTest
-public class PersonServiceTest {
+@Component
+public class PersonCompleteSearch {
 
     @Autowired
     private PersonServiceImpl personService;
@@ -25,11 +24,10 @@ public class PersonServiceTest {
     String SERVICE_URL;
 
     @Value("${json.count.field}")
-    String COUNT = "count";
+    String COUNT;
     RestTemplate restTemplate = new RestTemplate();
 
 
-    @Test
     public void testFetchDataByIndexAndGetPersonInfoByName() {
         RestTemplate restTemplate = new RestTemplate();
         String url = BASE_URL + SERVICE_URL;

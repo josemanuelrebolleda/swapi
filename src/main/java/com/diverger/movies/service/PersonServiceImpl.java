@@ -28,8 +28,6 @@ public class PersonServiceImpl extends SwapiService<Person, PersonDTO> {
 
     @Value("${json.name.field}")
     private String JSON_NAME_FIELD;
-    @Value("${slash}")
-    private String SLASH;
 
     PersonMapper personMapper;
     PersonOutputMapper personOutputMapper;

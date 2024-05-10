@@ -2,6 +2,7 @@ package com.diverger.movies.service;
 
 import com.diverger.movies.exceptions.InvalidUrlException;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
@@ -10,9 +11,13 @@ public abstract class SwapiService<T, D> {
     @Value("${swapi.base_url}")
     protected String BASE_URL;
     protected String SERVICE_URL;
+    @Value("${slash}")
+    protected String SLASH;
     @Value("${json.count.field}")
     String COUNT = "count";
-    protected RestTemplate restTemplate = new RestTemplate();
+
+    @Autowired
+    protected RestTemplate restTemplate;
 
     public abstract T fetchDataByIndex(Integer index);
     public D fetchDataByURL(String url, Class<D> classData) {
